@@ -1,0 +1,24 @@
+<?php
+
+/**
+ * @file
+ * Install file providing corresponding node reference schema.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function antimate_schema() {
+  $schema['antimate_words'] = array(
+    'description' => t('Collects the `bad` words'),
+    'fields' => array(
+      'id' => array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE),
+      'uid' => array('type' => 'int', 'not null' => TRUE, 'default' => 0),
+      'text' => array('type' => 'varchar', 'length' => 200, 'not null' => TRUE, 'default' => 0),
+      'type' => array('type' => 'varchar', 'length' => 100, 'not null' => TRUE, 'default' => 'badword'),
+    ),
+    'indexes' => array('id' => array('id')),
+    'primary key' => array('id'),
+  );
+  return $schema;
+}

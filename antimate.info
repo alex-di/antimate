@@ -1,0 +1,7 @@
+name = Russian AntiMate Filter
+package = Custom
+description = Filter
+core = 7.x
+
+files[] = antimate.module
+files[] = antimate.install

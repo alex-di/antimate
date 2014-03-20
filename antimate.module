@@ -1,0 +1,91 @@
+<?php
+
+function antimate_censor($string) {
+    $words = db_select('antimate_words', 't')
+            ->fields('t')
+            ->condition('t', array('badword_reg', 'badword'))
+            ->execute()
+            ->fetchAllAssoc('id');
+    $pattern = array('хуй|ху(й|и|я|е|л(и|е))|пизд|бл(я|т|д)|(с|сц)ук(а|о|и)|еб(а|и)|уеб|пид(о|е)р|хер+');
+    foreach ($words AS $word) {
+        $pattern[] = $word->text;
+    }
+    $words = db_select('antimate_words', 't')
+            ->fields('t')
+            ->condition('t', array('exclusion_reg', 'exclusion'))
+            ->execute()
+            ->fetchAllAssoc('id');
+    foreach ($words AS $word) {
+        $exclusions[] = $word->text;
+    }
+    $pattern = '/' . implode('|', $pattern) . '/';
+    if (!empty($exclusions)) {
+        $exclusions = '/' . implode('|', $exclusions) . '/';
+        $checkexc = true;
+    }
+    else
+        $checkexc = false;
+    //$string = 'Дохуевшие совсем ебанулись, вашу мать, пидорасня хренова, мудилы хуевы.';
+    $items = explode(' ', $string);
+    foreach ($items AS &$item) {
+        if (preg_match($pattern, $item)) {
+            if ($checkexc) {
+                if (!preg_match($exclusions, $item)) {
+                    mail('mm77707@gmail.com', 'Цензор', $item);
+                    $item = '*** ЦЕНЗУРА ***';
+                }
+            } else {
+                mail('mm77707@gmail.com', 'Цензор', $item);
+                $item = '*** ЦЕНЗУРА ***';
+            }
+        }
+    }
+    return trim(implode(' ', $items));
+}
+
+function antimate_menu() {
+    $items['admin/content/antimate'] = array(
+        'title' => t('Антимат'),
+        'access callback' => 'user_access',
+        'access arguments' => array('access antimate configuration'),
+        'page callback' => 'antimate_admin_content',
+        'type' => MENU_LOCAL_TASK,
+        'file' => 'antimate.admin.inc'
+    );
+    $items['admin/content/antimate/add'] = array(
+        'title' => t('Добавить'),
+        'access callback' => 'user_access',
+        'access arguments' => array('access antimate configuration'),
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('antimate_admin_settings'),
+        'type' => MENU_NORMAL_ITEM,
+        'file' => 'antimate.admin.inc'
+    );
+    return $items;
+}
+
+function antimate_permission() {
+    return array(
+        'access antimate configuration' => array(
+            'title' => t('Доступ к конфигурации антимата'),
+        )
+    );
+}
+
+function antimate_theme() {
+    return array('antimate_admin_content' => array(
+            'variables' => array('nodes' => NULL),
+            'file' => 'antimate.admin.inc',
+        )
+    );
+}
+
+function antimate_comment_presave($comment) {
+    $comment->subject = trim($comment->subject);
+
+    $comment->comment_body['und'][0]['value'] = antimate_censor($comment->comment_body['und'][0]['value']);
+    //var_dump($comment->comment_body['und'][0]['value']);
+    //exit();
+}
+
+?>
